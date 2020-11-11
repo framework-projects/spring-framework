@@ -16,26 +16,15 @@
 
 package org.springframework.beans.factory.support;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCreationNotAllowedException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.SingletonBeanRegistry;
 import org.springframework.core.SimpleAliasRegistry;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Generic registry for shared bean instances, implementing the
@@ -179,8 +168,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		// Quick check for existing instance without full singleton lock
+		// 首先从单例的缓存中寻找bean实例
 		Object singletonObject = this.singletonObjects.get(beanName);
+		/*
+		 * 如果没有从单例的缓存中寻找到bean实例，会判断当前是否是正在创建的bean
+		 * isSingletonCurrentlyInCreation()用于判断当前是否是正在创建的bean
+		 */
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			/*
+			 * 从earlySingletonObjects中寻找bean实例
+			 * earlySingletonObjects中保存所有提前暴露的bean实例
+			 */
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			if (singletonObject == null && allowEarlyReference) {
 				synchronized (this.singletonObjects) {
@@ -189,9 +187,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (singletonObject == null) {
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
+							// 如果允许早期依赖，可以尝试从singletonFactories中找到对应的单例工厂
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
+								// 创建bean
 								singletonObject = singletonFactory.getObject();
+								// 缓存提前暴露的bean，即还未进行注入的bean，用于解决循环依赖的问题
 								this.earlySingletonObjects.put(beanName, singletonObject);
 								this.singletonFactories.remove(beanName);
 							}
@@ -214,6 +215,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
+			// 先从缓存中寻找单例bean
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -224,6 +226,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				/*
+				 * 如果缓存中没有单例bean，则创建bean
+				 * 在创建bean之前，进行创建状态的添加。判断是否存在无法解析的循环引用，如果存在则抛出异常
+				 */
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -231,6 +237,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					// 通过singletonFactory创建bean
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -257,6 +264,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					// 新创建的单例bean放到singletonObject中
 					addSingleton(beanName, singletonObject);
 				}
 			}
