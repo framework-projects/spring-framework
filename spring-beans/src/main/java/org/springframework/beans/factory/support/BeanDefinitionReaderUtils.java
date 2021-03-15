@@ -151,6 +151,10 @@ public abstract class BeanDefinitionReaderUtils {
 
 	/**
 	 * Register the given bean definition with the given bean factory.
+	 *
+	 * 将使用NamespaceHolder装饰完成的BeanDefinitionHolder对象缓存起来,等待容器实例化
+	 * 也就是将这些BeanDefinitionHolder缓存到DefaultListableBeanFactory的beanDefinitionMap中
+	 *
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with
 	 * @throws BeanDefinitionStoreException if registration failed

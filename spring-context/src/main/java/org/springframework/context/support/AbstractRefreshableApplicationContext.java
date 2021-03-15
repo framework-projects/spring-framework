@@ -116,17 +116,28 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * This implementation performs an actual refresh of this context's underlying
 	 * bean factory, shutting down the previous bean factory (if any) and
 	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
+	 *
+	 * 首先清除掉上一次创建的BeanFactory和对象实例,
+	 * 然后创建一个DefaultListableBeanFactory对象并传入到loadBeanDefinition()方法中
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
 		if (hasBeanFactory()) {
+			// 如果BeanFactory不为空,则清除BeanFactory以及对应的实例
 			destroyBeans();
 			closeBeanFactory();
 		}
 		try {
+			// 创建DefaultListableBeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
 			beanFactory.setSerializationId(getId());
+			/*
+			 * 自定义设置BeanFactory
+			 * 	- 设置是否可以循环依赖allowCircularReferences
+			 * 	- 设置是否允许使用相同名称重新注册不同的Bean实现
+			 */
 			customizeBeanFactory(beanFactory);
+			// 解析xml,并将xml中的标签封装成BeanDefinition对象
 			loadBeanDefinitions(beanFactory);
 			this.beanFactory = beanFactory;
 		}

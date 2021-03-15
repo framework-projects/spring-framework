@@ -19,9 +19,10 @@ package org.springframework.context.support;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import javax.annotation.Nullable;
 
 /**
  * {@link AbstractRefreshableApplicationContext} subclass that adds common handling

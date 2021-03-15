@@ -196,6 +196,8 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	}
 
 	/**
+	 * 将xml配置加载到内存中并封装成为Resource对象
+	 *
 	 * Load bean definitions from the specified resource location.
 	 * <p>The location can also be a location pattern, provided that the
 	 * ResourceLoader of this bean definition reader is a ResourcePatternResolver.
@@ -220,6 +222,8 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
+				// 将位置模式字符串类型的xml文件路径转换成Resource对象类型,形如 classpath*:user/**/*-context.xml
+				// 也就是使用流的方式加载配置文件,然后封装成Resource对象
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
 				int count = loadBeanDefinitions(resources);
 				if (actualResources != null) {

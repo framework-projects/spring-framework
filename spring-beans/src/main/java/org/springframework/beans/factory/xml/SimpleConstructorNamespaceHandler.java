@@ -16,12 +16,6 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.util.Collection;
-
-import org.w3c.dom.Attr;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -30,6 +24,11 @@ import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.core.Conventions;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import java.util.Collection;
 
 /**
  * Simple {@code NamespaceHandler} implementation that maps custom
@@ -76,6 +75,14 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 		return null;
 	}
 
+	/**
+	 * 获取到c标签对应的值,封装成ValueHolder,再添加到BeanDefinition的ConstructorArgumentValues属性中,就完成了装饰工作
+	 *
+	 * @param node          需要进行解析装饰的标签元素
+	 * @param definition    the current bean definition
+	 * @param parserContext the object encapsulating the current state of the parsing process
+	 * @return
+	 */
 	@Override
 	public BeanDefinitionHolder decorate(Node node, BeanDefinitionHolder definition, ParserContext parserContext) {
 		if (node instanceof Attr) {
@@ -108,8 +115,7 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 					int index = -1;
 					try {
 						index = Integer.parseInt(arg);
-					}
-					catch (NumberFormatException ex) {
+					} catch (NumberFormatException ex) {
 						parserContext.getReaderContext().error(
 								"Constructor argument '" + argName + "' specifies an invalid integer", attr);
 					}
@@ -121,7 +127,7 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 					if (cvs.hasIndexedArgumentValue(index)) {
 						parserContext.getReaderContext().error(
 								"Constructor argument '" + argName + "' with index "+ index+" already defined using <constructor-arg>." +
-								" Only one approach may be used per argument.", attr);
+										" Only one approach may be used per argument.", attr);
 					}
 
 					cvs.addIndexedArgumentValue(index, valueHolder);
@@ -133,7 +139,7 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 				if (containsArgWithName(name, cvs)) {
 					parserContext.getReaderContext().error(
 							"Constructor argument '" + argName + "' already defined using <constructor-arg>." +
-							" Only one approach may be used per argument.", attr);
+									" Only one approach may be used per argument.", attr);
 				}
 				valueHolder.setName(Conventions.attributeNameToPropertyName(argName));
 				cvs.addGenericArgumentValue(valueHolder);

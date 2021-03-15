@@ -138,7 +138,9 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
 			throws BeansException {
 
+		// 调用父类构造器设置环境
 		super(parent);
+		// 创建解析器,解析configLocations
 		setConfigLocations(configLocations);
 		if (refresh) {
 			refresh();

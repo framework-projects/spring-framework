@@ -47,6 +47,8 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  *     pointcut-ref=&quot;getNameCalls&quot;
  *     advice-ref=&quot;getNameCounter&quot;/&gt;</pre>
  *
+ * AOP标签对应的NamespaceHandler. NamesapceHandler的作用就是注册和管理与自身相关的标签解析器
+ *
  * @author Rob Harrop
  * @author Adrian Colyer
  * @author Juergen Hoeller
