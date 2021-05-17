@@ -16,19 +16,18 @@
 
 package org.springframework.aop.framework;
 
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.springframework.aop.ProxyMethodInvocation;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.core.BridgeMethodResolver;
+import org.springframework.lang.Nullable;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
-
-import org.springframework.aop.ProxyMethodInvocation;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.core.BridgeMethodResolver;
-import org.springframework.lang.Nullable;
 
 /**
  * Spring's implementation of the AOP Alliance
@@ -160,29 +159,36 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	public Object proceed() throws Throwable {
 		// We start with an index of -1 and increment early.
 		if (this.currentInterceptorIndex == this.interceptorsAndDynamicMethodMatchers.size() - 1) {
+			// 如果Interceptor执行完毕，则开始执行joinpoint
 			return invokeJoinpoint();
 		}
 
 		Object interceptorOrInterceptionAdvice =
 				this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
+		// 判断是否为动态方法
 		if (interceptorOrInterceptionAdvice instanceof InterceptorAndDynamicMethodMatcher) {
+			// 动态匹配joinpoint
 			// Evaluate dynamic method matcher here: static part will already have
 			// been evaluated and found to match.
 			InterceptorAndDynamicMethodMatcher dm =
 					(InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;
 			Class<?> targetClass = (this.targetClass != null ? this.targetClass : this.method.getDeclaringClass());
+			// 动态匹配运行时参数是否满足条件
 			if (dm.methodMatcher.matches(this.method, targetClass, this.arguments)) {
+				// 运行时参数满足条件则执行当前Interceptor
 				return dm.interceptor.invoke(this);
 			}
 			else {
 				// Dynamic matching failed.
 				// Skip this interceptor and invoke the next in the chain.
+				// 运行参数匹配失败，则整个动态匹配失败，则略过当前Interceptor，执行下一个Interceptor
 				return proceed();
 			}
 		}
 		else {
 			// It's an interceptor, so we just invoke it: The pointcut will have
 			// been evaluated statically before this object was constructed.
+			// 如果是普通方法，直接执行当前Interceptor
 			return ((MethodInterceptor) interceptorOrInterceptionAdvice).invoke(this);
 		}
 	}

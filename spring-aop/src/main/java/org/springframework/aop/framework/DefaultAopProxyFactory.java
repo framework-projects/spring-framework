@@ -16,10 +16,10 @@
 
 package org.springframework.aop.framework;
 
+import org.springframework.aop.SpringProxy;
+
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
-
-import org.springframework.aop.SpringProxy;
 
 /**
  * Default {@link AopProxyFactory} implementation, creating either a CGLIB proxy
@@ -57,6 +57,12 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		/*
+		 * - IN_NATIVE_IMAGE 是否存在本地映像中
+		 * - config.isOptimize() 是否使用优化的代理策略，
+		 * - config.isProxyTargetClass() 是否是目标类本身而不是目标类的接口被代理
+		 * - hasNoUserSuppliedProxyInterfaces(config) 是否存在代理接口
+		 */
 		if (!IN_NATIVE_IMAGE &&
 				(config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config))) {
 			Class<?> targetClass = config.getTargetClass();
