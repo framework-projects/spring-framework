@@ -55,29 +55,38 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 	private static final boolean IN_NATIVE_IMAGE = (System.getProperty("org.graalvm.nativeimage.imagecode") != null);
 
 
+	/**
+	 * 根据Bean中的AdvisedSupport配置判断选择使用JDK动态代理还是CGLIB代理的AOP的代理方式
+	 *
+	 * @param config
+	 * @return AopProxy
+	 * @throws AopConfigException
+	 */
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
 		/*
 		 * - IN_NATIVE_IMAGE 是否存在本地映像中
-		 * - config.isOptimize() 是否使用优化的代理策略，
-		 * - config.isProxyTargetClass() 是否是目标类本身而不是目标类的接口被代理
-		 * - hasNoUserSuppliedProxyInterfaces(config) 是否存在代理接口
+		 * - config.isOptimize() 是否使用了优化的代理策略，也就是是否对代理类的生成使用策略优化，作用类似于isProxyTargetClass()，默认为false
+		 * - config.isProxyTargetClass() 是否是目标类被代理，而不是目标类的接口被代理，也就是是否使用CGLIB方式创建代理对象，默认为false
+		 * - hasNoUserSuppliedProxyInterfaces(config) 是否存在接口，并且如果只有一个接口时接口类型不是SpringProxy类型
 		 */
 		if (!IN_NATIVE_IMAGE &&
 				(config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config))) {
+			// 从AdvisedSupport中获取目标类对象
 			Class<?> targetClass = config.getTargetClass();
 			if (targetClass == null) {
 				throw new AopConfigException("TargetSource cannot determine target class: " +
 						"Either an interface or a target is required for proxy creation.");
 			}
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
-				// 如果目标类是接口，并且是代理类，则执行Java动态代理
+				// 如果目标类是接口，或者是SpringProxy类型的代理类，则执行Java动态代理
 				return new JdkDynamicAopProxy(config);
 			}
-			// 执行Cglib代理
+			// 执行CGLIB代理。目标类没有接口并且不是SpringProxy类型的代理类的时候,那么使用CGLIB代理
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {
+			// 不符合以上条件则执行JDK动态代理。也就是说如果没有使用优化的代理策略，目标类没有被代理，没有接口，获取接口类型时SpringProxy类型时使用JDK动态代理
 			return new JdkDynamicAopProxy(config);
 		}
 	}

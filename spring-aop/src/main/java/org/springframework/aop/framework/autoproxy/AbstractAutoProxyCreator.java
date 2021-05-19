@@ -329,9 +329,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
-		// 获取当前Bean配置的Advice
+		/*
+		 * 获取当前Bean配置的Advice
+		 *
+		 * 根据是否配置Advisor判断Bean是否需要代理。
+		 *
+		 * 如果配置了Advisor，并且当前的Bean符合要求，也就是匹配Advisor配置的正则表达式，那么当前的Bean就要进行动态代理
+		 */
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
+			// 将配置Advisor的Bean放入advisedBeans中，其中的cacheKey是Bean的名称BeanName
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
 			// 创建代理
 			Object proxy = createProxy(
@@ -339,7 +346,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
 		}
-
+		// 如果没有获取到配置Advisor的Bean，则将advisedBeans设置为不需要代理
 		this.advisedBeans.put(cacheKey, Boolean.FALSE);
 		return bean;
 	}
@@ -433,7 +440,14 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
-		// 创建ProxyFactory，用于生成代理类
+		/*
+		 * 创建ProxyFactory，用于生成代理类
+		 *
+		 * ProxyFactory类中提供getProxy()方法可以获取代理对象：
+		 * - 首先通过ProxyFactory父类的getAopProxyFactory()方法获取AopProxyFactory工厂类
+		 * - 然后通过AopProxyFactory工厂类创建AopProxy
+		 * - 最后通过AopProxy获取到实际的代理对象
+		 */
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
